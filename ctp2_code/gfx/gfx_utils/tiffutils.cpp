@@ -3,7 +3,7 @@
 // Project      : Call To Power 2
 // File type    : C++ source
 // Description  : tiff image format utilities
-// Id           : $Id$
+// Id           : $Id: tiffutils.cpp 705 2007-03-12 18:45:23Z Fromafar $
 //
 //----------------------------------------------------------------------------
 //
@@ -24,7 +24,7 @@
 //
 // Modifications from the original Activision code:
 //
-// - Removed unused local variables. (Sep 9th 2005 Martin Gühmann)
+// - Removed unused local variables. (Sep 9th 2005 Martin Gï¿½hmann)
 //
 //----------------------------------------------------------------------------
 
@@ -32,10 +32,13 @@
 
 #include "tiffutils.h"
 #include <tiffio.h>
+#ifndef __linux__
+#define CI_FixName(a) a
+#endif
 
 char *tiffutils_LoadTIF(const char *filename, uint16 *width, uint16 *height, size_t *size)
 {
-	TIFF * tif = TIFFOpen(filename, "r");
+	TIFF * tif = TIFFOpen(CI_FixName(filename), "r");
 	if (tif)
 	{
 		uint32 w, h;
@@ -59,6 +62,7 @@ char *tiffutils_LoadTIF(const char *filename, uint16 *width, uint16 *height, siz
 				memcpy(destImage, raster, npixels * sizeof(uint32));
 
 				_TIFFfree(raster);
+				TIFFClose(tif);
 
 				*width = (uint16)w;
 				*height = (uint16)h;
@@ -67,7 +71,10 @@ char *tiffutils_LoadTIF(const char *filename, uint16 *width, uint16 *height, siz
 			}
 		}
 		TIFFClose(tif);
+	} else {
+		printf("tiffutils_LoadTIF: failed to load %s\n", filename);
 	}
+
 
 	return NULL;
 }
@@ -76,7 +83,7 @@ char *TIF2mem(const char *filename, uint16 *width, uint16 *height, size_t *size)
 {
 	char    *image = NULL;
 	uint32  w=0, h=0;
-	TIFF    *tif = TIFFOpen(filename, "r");
+	TIFF    *tif = TIFFOpen(CI_FixName(filename), "r");
 
 	if (tif) {
 		TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &w);
@@ -110,7 +117,10 @@ char *TIF2mem(const char *filename, uint16 *width, uint16 *height, size_t *size)
 		}
 
 		TIFFClose(tif);
+	} else {
+		printf("TIF2mem: failed to load %s\n", filename);
 	}
+
 
 	*width = (uint16)w;
 	*height = (uint16)h;
@@ -120,7 +130,7 @@ char *TIF2mem(const char *filename, uint16 *width, uint16 *height, size_t *size)
 
 int TIFGetMetrics(const char *filename, uint16 *width, uint16 *height)
 {
-	TIFF *  tif = TIFFOpen(filename, "r");
+	TIFF *  tif = TIFFOpen(CI_FixName(filename), "r");
 
 	if (tif)
     {
@@ -134,6 +144,8 @@ int TIFGetMetrics(const char *filename, uint16 *width, uint16 *height)
 
 		*width = (uint16)w;
 		*height = (uint16)h;
+	} else {
+		printf("TIFGetMetrics: failed to load %s\n", filename);
 	}
 
 	return 0;
@@ -142,7 +154,7 @@ int TIFGetMetrics(const char *filename, uint16 *width, uint16 *height)
 int TIFLoadIntoBuffer16(const char *filename, uint16 *width, uint16 *height, uint16 imageRowBytes, uint16 *buffer, BOOL is565)
 {
 	uint32  w=0, h=0;
-	TIFF    *tif = TIFFOpen(filename, "r");
+	TIFF    *tif = TIFFOpen(CI_FixName(filename), "r");
 
 	if (tif)
     {
@@ -201,6 +213,8 @@ int TIFLoadIntoBuffer16(const char *filename, uint16 *width, uint16 *height, uin
 		}
 
 		TIFFClose(tif);
+	} else {
+		printf("TIFLoadIntoBuffer16: failed to load %s\n", filename);
 	}
 
 	*width = (uint16)w;
@@ -214,9 +228,11 @@ int TIFLoadIntoBuffer16(const char *filename, uint16 *width, uint16 *height, uin
 
 char *StripTIF2Mem(const char *filename, uint16 *width, uint16 *height, size_t *size)
 {
-	TIFF *  tif = TIFFOpen(filename, "r");
-	if (!tif)
+	TIFF *  tif = TIFFOpen(CI_FixName(filename), "r");
+	if (!tif) {
+		printf("StripTIF2Mem: failed to load %s\n", filename);
 	   return NULL;
+	}
 
 	*width = static_cast<uint16>(-1);
 	*height = static_cast<uint16>(-1);
